@@ -18,11 +18,13 @@
                 </button>
             </form>
 
-           {% if ai_response %}
-<div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-    <h3 class="font-bold text-slate-800">AI Result:</h3>
-    <p class="text-slate-700 whitespace-pre-wrap">{{ ai_response }}</p>
-</div>
+          {% if ai_response %}
+    <div style="background-color: white; padding: 20px; margin-top: 20px; border: 2px solid blue;">
+        <h3 style="color: black;">Here is your AI Result:</h3>
+        <p style="color: black;">{{ ai_response }}</p>
+    </div>
+{% else %}
+    <p style="color: grey;">Waiting for an AI result...</p>
 {% endif %}
         </div>
 
