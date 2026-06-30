@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-2">AI Engine Interface</h2>
+            <p class="text-blue-300 text-sm mb-6">Provide instructions to the model to generate content assets.</p>
+            
+            <form method="POST">
+                <textarea name="prompt" rows="5" placeholder="Describe what you want the AI to write in detail..." 
+                    class="w-full bg-black/40 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:border-indigo-500 transition-all"></textarea>
+                
+                <button type="submit" 
+                    class="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.4)] transition-all duration-300 transform hover:scale-[1.01]">
+                    Execute Run
+                </button>
+            </form>
+
+            {% if ai_response %}
+            <div class="mt-8 p-4 bg-indigo-950/30 border border-indigo-500/30 rounded-xl">
+                <p class="text-indigo-200">{{ ai_response }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+            <h2 class="text-xl font-semibold mb-6">HISTORY LEDGER</h2>
+            <div class="space-y-4">
+                {% for item in history %}
+                <div class="p-4 bg-black/30 border border-white/5 rounded-lg">
+                    <p class="text-xs text-blue-400 mb-1">Prompt: "{{ item.prompt[:40] }}..."</p>
+                    <p class="text-sm text-gray-300">{{ item.result[:60] }}...</p>
+                </div>
+                {% else %}
+                <p class="text-gray-500 italic">No historical runs saved in database context yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
