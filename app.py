@@ -83,30 +83,18 @@ def login():
 @login_required
 def dashboard():
     ai_response = None
-    history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
     
     if request.method == 'POST':
         user_prompt = request.form.get('prompt')
-        try:
-            response = gemini_client.models.generate_content(
-                model='gemini-1.5-flash', 
-                contents=user_prompt
-            )
-            ai_response = response.text
-            
-            # Save to database
-            new_content = AIContent(prompt=user_prompt, result=ai_response, author=current_user)
-            db.session.add(new_content)
-            db.session.commit()
-            
-            # REFRESH HISTORY so the new run appears in the list
-            history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
-            
-        except Exception as e:
-            flash(f"AI Error: {str(e)}", "danger")
-            
-    # NO REDIRECT HERE. Just let it finish and send the ai_response to the HTML
-    return render_template('dashboard.html', ai_response=ai_response, history=history)
+        # This is where the AI works
+        response = gemini_client.models.generate_content(
+            model='gemini-1.5-flash', 
+            contents=user_prompt
+        )
+        ai_response = response.text # The Chef puts the food on the plate
+        
+    # We just return the page, carrying the 'ai_response' plate with us
+    return render_template('dashboard.html', ai_response=ai_response)
 
 @app.route('/logout')
 @login_required
