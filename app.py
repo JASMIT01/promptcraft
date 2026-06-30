@@ -100,6 +100,7 @@ def dashboard():
             db.session.commit()
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
+            return render_template('dashboard.html', ai_response=ai_response)
 
     history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
     return render_template('dashboard.html', ai_response=ai_response, history=history)
