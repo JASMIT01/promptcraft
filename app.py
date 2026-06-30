@@ -20,7 +20,7 @@ login_manager.login_view = 'login'
 # Initialize AI Client
 gemini_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
-# --- CREATE DATABASE TABLES AUTOMATICALLY ---
+# --- CRITICAL: INITIALIZE DATABASE TABLES ---
 with app.app_context():
     db.create_all()
 
@@ -41,7 +41,8 @@ class AIContent(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- ROUTES ---
+# --- APPLICATION ROUTES ---
+
 @app.route('/')
 def home():
     if current_user.is_authenticated:
@@ -87,7 +88,6 @@ def dashboard():
     if request.method == 'POST':
         user_prompt = request.form.get('prompt')
         try:
-            # FIX: Using a valid model name
             response = gemini_client.models.generate_content(
                 model='gemini-1.5-flash', 
                 contents=user_prompt
@@ -96,11 +96,17 @@ def dashboard():
             new_content = AIContent(prompt=user_prompt, result=ai_response, author=current_user)
             db.session.add(new_content)
             db.session.commit()
-            return redirect(url_for('dashboard')) # Refresh to show history
+            return redirect(url_for('dashboard'))
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
             
     return render_template('dashboard.html', ai_response=ai_response, history=history)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
