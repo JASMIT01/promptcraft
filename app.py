@@ -78,23 +78,37 @@ def login():
             return redirect(url_for('dashboard'))
         flash('Login Unsuccessful.', 'danger')
     return render_template('login.html')
-
+    
 @app.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 def dashboard():
     ai_response = None
+    history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
     
     if request.method == 'POST':
         user_prompt = request.form.get('prompt')
-        # This is where the AI works
-        response = gemini_client.models.generate_content(
-           model='gemini-2.0-flash', 
-            contents=user_prompt
-        )
-        ai_response = response.text # The Chef puts the food on the plate
-        
-    # We just return the page, carrying the 'ai_response' plate with us
-    return render_template('dashboard.html', ai_response=ai_response)
+        try:
+            response = gemini_client.models.generate_content(
+                model='gemini-2.0-flash', 
+                contents=user_prompt
+            )
+            ai_response = response.text
+            
+            # Save to database
+            new_content = AIContent(prompt=user_prompt, result=ai_response, author=current_user)
+            db.session.add(new_content)
+            db.session.commit()
+            history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
+            
+        except Exception as e:
+            # This is the "Safety Net": if Google says "No", we don't crash
+            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                flash("The AI is taking a break. You've hit your daily limit!", "danger")
+            else:
+                flash(f"Something went wrong: {str(e)}", "danger")
+            
+    return render_template('dashboard.html', ai_response=ai_response, history=history)
+
 
 @app.route('/logout')
 @login_required
