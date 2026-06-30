@@ -12,22 +12,17 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'dev-portfolio-key-123'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 
-# --- MODEL CHECKER ---
-gemini_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
-print("--- CHECKING AVAILABLE MODELS ---")
-for model in gemini_client.models.list():
-    print(f"FOUND MODEL: {model.name}")
-print("---------------------------------")
-# ---------------------
-
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# --- INITIALIZE THE AI CLIENT ---
-# This line was missing! This tells the app how to talk to Google.
+# Initialize AI Client
 gemini_client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+
+# --- CREATE DATABASE TABLES AUTOMATICALLY ---
+with app.app_context():
+    db.create_all()
 
 # --- DATABASE MODELS ---
 class User(db.Model, UserMixin):
@@ -46,7 +41,7 @@ class AIContent(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- APPLICATION ROUTES ---
+# --- ROUTES ---
 @app.route('/')
 def home():
     if current_user.is_authenticated:
@@ -58,6 +53,9 @@ def register():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        if not username or not password:
+            flash("Please fill all fields", "danger")
+            return redirect(url_for('register'))
         hashed_pw = bcrypt.generate_password_hash(password).decode('utf-8')
         if User.query.filter_by(username=username).first():
             flash('Username already exists.', 'danger')
@@ -84,33 +82,25 @@ def login():
 @login_required
 def dashboard():
     ai_response = None
+    history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
+    
     if request.method == 'POST':
         user_prompt = request.form.get('prompt')
         try:
-            # LIVE AI CALL
-            # Change the model line to this:
+            # FIX: Using a valid model name
             response = gemini_client.models.generate_content(
-    model='gemini-2.5-flash', 
-    contents=user_prompt
+                model='gemini-1.5-flash', 
+                contents=user_prompt
             )
             ai_response = response.text
-            
             new_content = AIContent(prompt=user_prompt, result=ai_response, author=current_user)
             db.session.add(new_content)
             db.session.commit()
+            return redirect(url_for('dashboard')) # Refresh to show history
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
-            return render_template('dashboard.html', ai_response=ai_response)
-
-    history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
+            
     return render_template('dashboard.html', ai_response=ai_response, history=history)
 
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all() 
     app.run(debug=True)
