@@ -99,12 +99,13 @@ def dashboard():
             db.session.add(new_content)
             db.session.commit()
             
-            # Refresh history so the new item appears
+            # REFRESH HISTORY so the new run appears in the list
             history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
             
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
             
+    # NO REDIRECT HERE. Just let it finish and send the ai_response to the HTML
     return render_template('dashboard.html', ai_response=ai_response, history=history)
 
 @app.route('/logout')
