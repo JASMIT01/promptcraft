@@ -88,7 +88,7 @@ def dashboard():
         user_prompt = request.form.get('prompt')
         # This is where the AI works
         response = gemini_client.models.generate_content(
-            model='gemini-1.5-flash', 
+           model='gemini-2.0-flash', 
             contents=user_prompt
         )
         ai_response = response.text # The Chef puts the food on the plate
