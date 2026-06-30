@@ -1,6 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="p-4 bg-red-100 text-red-700 rounded-lg mb-4">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 <div class="container mx-auto p-8">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         
