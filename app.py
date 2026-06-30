@@ -93,10 +93,15 @@ def dashboard():
                 contents=user_prompt
             )
             ai_response = response.text
+            
+            # Save to database
             new_content = AIContent(prompt=user_prompt, result=ai_response, author=current_user)
             db.session.add(new_content)
             db.session.commit()
-            return redirect(url_for('dashboard'))
+            
+            # Refresh history so the new item appears
+            history = AIContent.query.filter_by(author=current_user).order_by(AIContent.id.desc()).all()
+            
         except Exception as e:
             flash(f"AI Error: {str(e)}", "danger")
             
